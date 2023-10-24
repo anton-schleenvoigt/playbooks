@@ -1,0 +1,5 @@
+- host: all
+  name: update
+  apt:
+    update_catch: yes
+    upgrade: yes
