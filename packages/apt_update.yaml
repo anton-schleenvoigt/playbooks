@@ -1,11 +1,34 @@
 
 - hosts: all
-  vars:
-    ansible_host_key_checking: false ##If you get an error about hosts not trusted
   become: true
-
   tasks:
-  - name: Update and upgrade apt packages
+  - name: Check for unattended-upgrade processes
+    shell: pgrep -x unattended-upgrades
+    register: unattended_upgrade_processes
+    failed_when: unattended_upgrade_processes.rc != 0 and unattended_upgrade_processes.rc != 1
+    ignore_errors: true
+  - debug:
+      var: unattended_upgrade_processes
+
+  - name: Wait for unattended-upgrade processes to complete
+    wait_for:
+      path: "/proc/{{ item }}/status"
+      state: absent
+    loop: "{{ unattended_upgrade_processes.stdout_lines }}"
+    when: unattended_upgrade_processes.rc != 0
+
+  - name: Stop and disable unattended-upgrades service
+    systemd:
+      name: unattended-upgrades.service
+      state: stopped
+      enabled: no
+
+  - name: Check if dpkg lock is acquired
+    shell: while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done;
+  - name: Check if dpkg lock is acquired
+    shell: while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done;
+
+  - name: Remove unattended-upgrades package
     apt:
-      update_cache: yes
-      upgrade: yes
+      name: unattended-upgrades
+      state: absent
