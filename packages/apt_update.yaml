@@ -1,6 +1,6 @@
 
 - hosts: all
-  become: true
+  become: yes
   tasks:
   - name: Check for unattended-upgrade processes
     shell: pgrep -x unattended-upgrades
