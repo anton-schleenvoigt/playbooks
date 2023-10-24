@@ -1,6 +1,7 @@
-- host: all
-  name: update
-  become: yes
-  apt:
-    update_catch: yes
-    upgrade: yes
+- hosts: all
+  tasks:
+  - name: Update and upgrade packages
+    become: yes
+    apt:
+      update_cache: yes
+      upgrade: yes
